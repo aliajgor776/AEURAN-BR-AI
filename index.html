@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AEURAN BR AI - Amazon/FBA Profit Tracker</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- Chart.js for visualization (optional/modern UI) -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- SheetJS CDN for Excel Export -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- Header Section -->
+  <header class="header">
+    <div class="logo">
+      <h1>AEURAN BR AI</h1>
+      <span class="badge">PRO</span>
+    </div>
+    <div class="tool-info">
+      <p>💡 <strong>AEURAN BR AI কী?</strong> এটি একটি অ্যাডভান্সড FBA ও ই-কমার্স প্রফিট/লস ট্র্যাকার। এর মাধ্যমে আপনি দৈনিক সেলস, অ্যাড স্পেন্ড, FBA ফি ও প্রোডাক্ট কস্ট হিসেব করে রিয়েল-টাইম ACOS, ROAS এবং Net Profit/Loss পর্যবেক্ষণ ও Excel-এ রিপোর্ট এক্সপোর্ট করতে পারবেন।</p>
+    </div>
+  </header>
+
+  <div class="container">
+
+    <!-- Notice Banner for Month End -->
+    <div id="month-end-notice" class="notice-banner hidden">
+      ⚠️ <strong>মাসিক রিপোর্ট অ্যালার্ট:</strong> চলতি মাসের শেষ দিন আজ! দয়া করে আপনার মাসিক রিপোর্ট Excel ফাইল হিসেবে ডাউনলোড করে রাখুন। নতুন মাসের ১ তারিখে পুরানো ডেটা রিসেট হয়ে যাবে।
+    </div>
+
+    <!-- Product Management Panel -->
+    <section class="card">
+      <h2>📦 প্রোডাক্ট ম্যানেজমেন্ট</h2>
+      <div class="add-product-form">
+        <input type="text" id="new-product-name" placeholder="নতুন প্রোডাক্টের নাম লিখুন (যেমন: Wireless Mouse)">
+        <button id="add-product-btn" class="btn btn-primary">+ নতুন প্রোডাক্ট যোগ করুন</button>
+      </div>
+
+      <!-- Selected Product Selector -->
+      <div class="product-selector-wrapper">
+        <label for="product-select">প্রোডাক্ট সিলেক্ট করুন:</label>
+        <select id="product-select"></select>
+      </div>
+    </section>
+
+    <!-- Daily Data Input Panel -->
+    <section class="card" id="input-section">
+      <div class="card-header">
+        <h3>📅 দৈনিক ডেটা এন্ট্রি (<span id="active-product-title">কোনো প্রোডাক্ট সিলেক্ট করা নেই</span>)</h3>
+      </div>
+      
+      <form id="daily-data-form" class="grid-form">
+        <div class="form-group">
+          <label>তারিখ (Date)</label>
+          <input type="date" id="entry-date" required>
+        </div>
+        <div class="form-group">
+          <label>Supplier Cost ($/unit)</label>
+          <input type="number" step="0.01" id="supplier-cost" placeholder="0.00" required>
+        </div>
+        <div class="form-group">
+          <label>FBA Fee ($/unit)</label>
+          <input type="number" step="0.01" id="fba-fee" placeholder="0.00" required>
+        </div>
+        <div class="form-group">
+          <label>Selling Price ($/unit)</label>
+          <input type="number" step="0.01" id="sale-price" placeholder="0.00" required>
+        </div>
+        <div class="form-group">
+          <label>Units Sold (দৈনিক বিক্রি)</label>
+          <input type="number" id="units-sold" placeholder="0" required>
+        </div>
+        <div class="form-group">
+          <label>Ad Spend ($)</label>
+          <input type="number" step="0.01" id="ad-spend" placeholder="0.00" required>
+        </div>
+        <div class="form-group full-width">
+          <button type="submit" class="btn btn-success">💾 ডেটা সেভ / আপডেট করুন</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- Analytics Dashboard Panel -->
+    <section class="card">
+      <h2>📊 সামগ্রিক পারফরম্যান্স ড্যাশবোর্ড (Overall So Far)</h2>
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <h4>Total Units Sold</h4>
+          <p id="total-units">0</p>
+        </div>
+        <div class="metric-card">
+          <h4>Total Sales Amount</h4>
+          <p id="total-sales">$0.00</p>
+        </div>
+        <div class="metric-card">
+          <h4>Total Ad Spend</h4>
+          <p id="total-ad-spend">$0.00</p>
+        </div>
+        <div class="metric-card">
+          <h4>ACOS</h4>
+          <p id="acos-val">0.00%</p>
+        </div>
+        <div class="metric-card">
+          <h4>ROAS</h4>
+          <p id="roas-val">0.00x</p>
+        </div>
+        <div class="metric-card highlight">
+          <h4>Gross Profit / Loss</h4>
+          <p id="gross-profit">$0.00</p>
+        </div>
+      </div>
+
+      <!-- Additional Costs & Final Settlement -->
+      <div class="additional-cost-box">
+        <h3>💸 অতিরিক্ত খরচ ও চূড়ান্ত লাভ/ক্ষতি (Final Settlement)</h3>
+        <div class="cost-input-row">
+          <label for="additional-cost">অতিরিক্ত খরচ/মাসিক ফি ($): </label>
+          <input type="number" id="additional-cost" value="0" step="0.01">
+        </div>
+        <div class="final-result-display">
+          <span>Final Net Profit / Loss:</span>
+          <h2 id="final-net-profit" class="profit-positive">$0.00</h2>
+        </div>
+      </div>
+    </section>
+
+    <!-- Data Table & History -->
+    <section class="card">
+      <h2>📜 এন্ট্রি হিস্টোরি (গত ৩০ দিন)</h2>
+      <div class="table-responsive">
+        <table id="data-table">
+          <thead>
+            <tr>
+              <th>তারিখ</th>
+              <th>Supplier Cost</th>
+              <th>FBA Fee</th>
+              <th>Sale Price</th>
+              <th>Units Sold</th>
+              <th>Ad Spend</th>
+              <th>Total Revenue</th>
+              <th>Profit/Loss</th>
+              <th>অ্যাকশন</th>
+            </tr>
+          </thead>
+          <tbody id="table-body">
+            <!-- Dynamic rows will go here -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Excel Export Section -->
+    <section class="card">
+      <h2>📥 Excel রিপোর্ট এক্সপোর্ট (Custom Range)</h2>
+      <div class="export-controls">
+        <div class="form-group">
+          <label>শুরুর তারিখ (From)</label>
+          <input type="date" id="export-from">
+        </div>
+        <div class="form-group">
+          <label>শেষের তারিখ (To)</label>
+          <input type="date" id="export-to">
+        </div>
+        <button id="export-btn" class="btn btn-secondary">📁 Excel Sheet এক্সপোর্ট করুন</button>
+      </div>
+    </section>
+
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
